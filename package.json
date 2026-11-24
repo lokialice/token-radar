@@ -11,6 +11,7 @@
   "scripts": {
     "start": "node main.ts --input input/snapshot.json --output out",
     "test": "node --test tests/engine.test.ts",
-    "verify": "node scripts/verify.ts"
+    "verify": "node scripts/verify.ts",
+    "lint": "node scripts/lint.ts"
   }
 }

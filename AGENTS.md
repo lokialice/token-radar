@@ -11,6 +11,7 @@ Node 22.18+ (`.nvmrc`), TypeScript run as-is by Node, **standard library only**.
 | Build output | `npm start` (writes `out/`; needs the kit's `input/snapshot.json`) |
 | Tests | `npm test` (one file: `node --test tests/engine.test.ts`) |
 | Two-run byte check | `npm run verify` |
+| Conventions | `npm run lint` (rules and reasons: `CONVENTIONS.md`) |
 | Syntax check | `node --check dashboard/model.js dashboard/app.js` |
 
 ## Layout
@@ -23,6 +24,7 @@ Node 22.18+ (`.nvmrc`), TypeScript run as-is by Node, **standard library only**.
 - `docs/adr/`: decisions. Add one when the model changes.
 
 ## Conventions
+Full rules, with reasons and the dashboard's size-budget exceptions: `CONVENTIONS.md`. Enable hooks with `git config core.hooksPath .githooks`.
 - Deterministic output: no `Date.now()`, no `Math.random()`; a fixed seed and fold order. Two runs must match byte for byte.
 - No protocol name is ever special-cased. Values come from snapshot figures only.
 - Dashboard source (all files in `dashboard/`) stays under 64,800 bytes in total: the judge reads it from the dossier.
