@@ -1,0 +1,16 @@
+{
+  "name": "token-radar",
+  "version": "2.0.0",
+  "description": "Ranks pre-token DeFi protocols by implied value and plans how to farm each one.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node main.ts --input input/snapshot.json --output out",
+    "test": "node --test tests/engine.test.ts",
+    "verify": "node scripts/verify.ts"
+  }
+}

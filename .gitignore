@@ -1,0 +1,10 @@
+out/
+node_modules/
+.env
+.env.*
+makefun-keypair.json
+*.keypair.json
+transcripts.tar.gz
+.DS_Store
+input
+screenshots/*.tmp
