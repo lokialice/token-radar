@@ -19,9 +19,7 @@ for (const r of R) { r.e = M.econ(r, st.share); r.verdict = M.verdict(r, r.e); r
 const INK = '#e3f2ed', MUT = '#8aa39e', GRID = '#172b3a', BLUE = '#3d7cc0', cw = () => (mq.matches ? 360 : 520);
 const sv = (w, h, l, i) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(l)}">${i}</svg>`;
 const tx = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.s || 10}" fill="${o.f || MUT}" text-anchor="${o.a || 'start'}" font-family="ui-monospace,Menlo,monospace">${esc(s)}</text>`;
-const dm = (r, x, y, rad) => `<circle class="dot${r.slug === st.sel ? ' sel' : ''}" data-s="${r.slug}" data-tip="${esc(`${r.name}: ${VL[r.verdict]}, win ${pct(r.e.win)}, ${r.e.moic.toFixed(1)}x, ${usd(r.implied)}`)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad}" fill="${VC[r.verdict]}" fill-opacity="${r.verdict === 'skip' ? 0.5 : 0.92}" stroke="rgba(0,0,0,0)" stroke-width="12" tabindex="0" role="button" aria-label="${esc(r.name)}, ${VL[r.verdict]}"/>`;
 const box = (t, q, s) => `<div class="cc"><h3>${t}</h3><p class="cq">${q}</p>${s}</div>`;
-const key = () => '<div class="key"><span><i style="background:#55e6b1"></i>Farm now</span><span><i style="background:#7ab8ff"></i>Watch</span><span><i style="background:#5d6f7b"></i>Skip</span></div>';
 // Squarified treemap: tiles close to square, each with an area proportional to .v
 function squarify(items, x, y, w, h) {
 const out = [], sc = (w * h) / items.reduce((s, i) => s + i.v, 0); let q = items.map((i) => ({ i, a: i.v * sc }));

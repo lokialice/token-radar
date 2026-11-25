@@ -60,7 +60,7 @@
   }
   return { names, termOf, pen, row: (o) => parts.flatMap((f) => f(o)) };
  }
- const miss = (e) => Math.exp(med(e.map(Math.abs)));
+ const miss = (e) => (e.length ? Math.exp(med(e.map(Math.abs))) : Infinity);
  function folds(obs, k) {
   const dated = obs.filter((o) => o.listed).sort((a, b) => (a.listed < b.listed ? -1 : a.listed > b.listed ? 1 : a.slug < b.slug ? -1 : 1)), undated = obs.filter((o) => !o.listed), size = Math.ceil(dated.length / k), out = [];
   for (let b = 1; b < k; b++) out.push({ train: [...dated.slice(0, b * size), ...undated], test: dated.slice(b * size, (b + 1) * size) });
@@ -153,7 +153,7 @@
    if (p.change_7d === null) flags.push('Seven-day change not reported');
    if (age === null) flags.push('Listing date unknown');
    return { slug: p.slug, name: p.name, category: p.category, chains: p.chains, kind: o.fam, tvl: p.tvl_usd, g7: p.change_7d, listed: p.listed_at, age, onList: onList.has(p.slug), mult: r4(mult), ifl: Math.round(ifl), odds: r4(odds), implied, low: Math.max(1, Math.round(implied * Math.exp(q25))), high: Math.round(implied * Math.exp(q75)), oddsPeers: cat,
-    build: [{ label: 'Typical multiple', value: r4(Math.exp(parts.get('intercept') || 0)) }, ...sv.terms.map((t) => ({ label: t, value: r4(Math.exp(parts.get(t) || 0)) }))], peers, conf: peers >= 8 ? 'high' : peers >= 4 ? 'medium' : 'low', gaps: [p.change_7d === null ? 'change_7d' : '', age === null ? 'listed_at' : '', peers < C.minPeers ? 'fit' : ''].filter(Boolean),
+    build: [{ label: 'Typical multiple', value: r4(Math.exp(parts.get('intercept'))) }, ...sv.terms.map((t) => ({ label: t, value: r4(Math.exp(parts.get(t))) }))], peers, conf: peers >= 8 ? 'high' : peers >= 4 ? 'medium' : 'low', gaps: [p.change_7d === null ? 'change_7d' : '', age === null ? 'listed_at' : '', peers < C.minPeers ? 'fit' : ''].filter(Boolean),
     capital: c.capital, hold: c.hold, weeks: c.weeks, chain: c.chain, tx: c.tx, gas: c.gas, carry: c.carry, cost: c.cost, hard, flags, pool };
   }).sort((a, b) => b.implied - a.implied || (a.slug < b.slug ? -1 : 1)).map((r, i) => ({ ...r, rank: i + 1 }));
   const liveRows = snap.protocols.filter((p) => p.mcap_usd > 0 && p.category !== 'CEX').sort((a, b) => b.mcap_usd - a.mcap_usd || (a.slug < b.slug ? -1 : 1)), total = liveRows.length;
