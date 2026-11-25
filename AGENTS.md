@@ -9,7 +9,8 @@ Node 22.18+ (`.nvmrc`), TypeScript run as-is by Node, **standard library only**.
 | Task | Command |
 |------|---------|
 | Build output | `npm start` (writes `out/`; needs the kit's `input/snapshot.json`) |
-| Tests | `npm test` (one file: `node --test tests/engine.test.ts`) |
+| Tests, all, with the 100% coverage gate | `npm test` (about 45 s; the browser tests need Chrome, or `CHROME=<path>`) |
+| Quick tests, no browser | `npm run test:unit` |
 | Two-run byte check | `npm run verify` |
 | Conventions | `npm run lint` (rules and reasons: `CONVENTIONS.md`) |
 | Syntax check | `node --check dashboard/model.js dashboard/app.js` |
@@ -30,7 +31,7 @@ Full rules, with reasons and the dashboard's size-budget exceptions: `CONVENTION
 - Dashboard source (all files in `dashboard/`) stays under 64,800 bytes in total: the judge reads it from the dossier.
 - No network address anywhere in `dashboard/`.
 - Never commit `makefun-keypair.json`, `.env`, `input/` or `out/`.
-- A change to the model needs a test in `tests/engine.test.ts` and an ADR note.
+- A change to the model needs a test (`tests/model.test.ts`) and an ADR note; a change to the page needs a step in `tests/ui.test.ts`, which fails if any character of `app.js` or `model.js` never ran.
 
 ## Commit Attribution
 AI commits MUST include:

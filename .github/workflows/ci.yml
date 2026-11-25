@@ -39,7 +39,7 @@ jobs:
         run: |
           curl -sSfL "https://make.fun/c/token-radar-01/kit" | tar xz token-radar-01-kit/input
           ln -s token-radar-01-kit/input input
-      - name: Tests
+      - name: Tests, browser included, with the 100% coverage gate
         run: npm test
       - name: Two runs, every byte compared
         run: npm run verify

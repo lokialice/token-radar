@@ -37,7 +37,7 @@ this is the reasoning. Rules that a script can check are checked by `npm run lin
 
 ## The dashboard exception
 The judge reads `dashboard/` from the dossier, whose text holds 65,536 bytes with its headers, so all files together
-stay under **64,800 bytes** (`tests/engine.test.ts`). That budget wins over style where they clash: indentation is
+stay under **64,800 bytes** (checked by `npm run lint`). That budget wins over style where they clash: indentation is
 dropped in `app.js`, one space in `model.js`, and some functions run past 50 lines (`detail`, `evid`, `cTree`).
 Do not "fix" them with more bytes; shorten text, move static prose to `lib/plan.ts` (`PROSE`) or delete a feature.
 Known debt: those long functions, and a few repeated inline styles.
@@ -48,9 +48,17 @@ Known debt: those long functions, and a few repeated inline styles.
 - Every number the page shows is computed in the page from the snapshot, or is static text from `data.js`. Never a bare literal.
 
 ## Tests
-- Node's built-in runner: `npm test`. Name a test for the behaviour (`a term is kept only when both held-out tests improve`).
-- Arrange, act, assert; one behaviour per test; tests are independent and need no network.
-- A change to `dashboard/model.js` needs a test. The sealed snapshot is not committed: tests skip without `input/snapshot.json`.
+- Node's built-in runner, `npm test`, fails below **100% line, branch and function coverage** of `lib/` and `dashboard/model.js`.
+  `npm run test:unit` is the quick suite without a browser; it is what the pre-commit hook runs.
+- The page (`dashboard/app.js`) is driven in a real Chrome over the DevTools protocol (`tests/ui.test.ts`, no dependency
+  installed); the test fails if any character of `app.js` or `model.js` never ran. Set `CHROME` to point at a browser.
+- `main.ts` and `scripts/` are tested as the processes they are (`tests/cli.test.ts`): exit codes, output, each lint rule.
+- Data: engine tests run on a seeded synthetic snapshot with known structure and probes for each rule
+  (`tests/helpers.ts`); `tests/real.test.ts` and one browser test run on the sealed snapshot. The snapshot is not
+  committed, so those skip without `input/snapshot.json`.
+- Name a test for the behaviour; arrange, act, assert; one behaviour per test; tests are independent and need no network.
+- A change to `dashboard/model.js` needs a test. 100% coverage proves every line ran, not that every case is right:
+  assert the figure, the flag text and the boundary, not only that a branch was reached.
 
 ## Git
 - **Trunk-based.** `main` always builds and passes `npm test`. Work on short-lived branches (`feat/`, `fix/`,
