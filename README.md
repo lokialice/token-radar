@@ -24,6 +24,20 @@ Open `out/dashboard/index.html`: it reads `../data.js` and needs no network.
 - A term enters a model only if it lowers the held-out error in two tests: leave-one-out and walk-forward. On this snapshot only the size curve earns a place in the value model, with a typical miss of x3.0, so the page says the tail is wide.
 - **Verdicts** come from 400 payoff draws per protocol (the token launches with its odds; its value is the fitted value times a draw from the model's errors, 30% of it one market factor): Farm now needs a 40% chance of profit and twice the cost back.
 
+## Tests and coverage
+
+`npm test` runs 49 tests (about 45 s) and fails below 100% coverage of the engine and `lib/`.
+
+| Code | Measured by | Result |
+|------|-------------|--------|
+| `dashboard/model.js`, `lib/*.ts` | Node's coverage, on a seeded synthetic snapshot and the sealed one | 100% lines, 100% branches, 100% functions |
+| `dashboard/app.js` | Chrome over the DevTools protocol, a scripted tour of every filter, tab, slider, link, viewport and tooltip | 100% of characters ran, or the test fails |
+| `main.ts`, `scripts/` | Run as processes: exit codes, output, each lint rule | behaviour tested, no line count |
+
+100% coverage shows every line ran, not that every case is right: the tests also assert the figures, flag texts and
+boundaries. The browser tests need Chrome (`CHROME=<path>` to point at one) and the sealed snapshot is not committed,
+so the tests that use it skip without `input/snapshot.json`. `npm run test:unit` is the quick suite without a browser.
+
 See `docs/adr/` for the decisions and `AGENTS.md` for the layout.
 
 ---
