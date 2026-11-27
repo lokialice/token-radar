@@ -14,29 +14,22 @@
 <svg class="art" viewBox="0 0 300 100" preserveAspectRatio="xMaxYMid slice" aria-hidden="true"><g fill="none" stroke="#172b3a"><circle cx="150" cy="50" r="22"/><circle cx="150" cy="50" r="44"/><circle cx="150" cy="50" r="66"/><path d="M150 -20V120M60 50H300"/></g><g class="sweep"><path d="M150 50L216 50A66 66 0 0 0 206 11Z" fill="rgba(85,230,177,.2)"/><path d="M150 50H216" stroke="#55e6b1" stroke-width="1.5"/></g><g fill="#55e6b1"><circle cx="183" cy="24" r="2.4"/><circle cx="118" cy="66" r="2"/><circle cx="200" cy="74" r="2.2"/></g><circle cx="196" cy="40" r="3.4" fill="#55e6b1"/><circle cx="196" cy="40" r="9" fill="none" stroke="#55e6b1" stroke-width=".8" stroke-dasharray="2 3"/><circle cx="100" cy="44" r="2.4" fill="#ffb454"/></svg>
 </header>
 <main class="main">
-<section class="card" aria-label="Screener">
-<div class="pad" style="padding-bottom:8px">
-<h2>Screener <button class="btn" id="ftog" type="button">Filters</button></h2>
-<div class="presets" id="presets"></div>
+<section class="card" aria-label="Board">
+<div class="read" id="read"></div>
+<div class="bar">
+<input id="q" type="search" placeholder="Search a protocol" aria-label="Search a protocol">
+<button class="btn" id="ftog" type="button">Filters</button>
 <div class="filters">
-<input id="q" class="wide" type="search" placeholder="Search a protocol" aria-label="Search a protocol">
 <select id="cat" aria-label="Category"></select><select id="chain" aria-label="Chain"></select>
 <select id="size" aria-label="Size"><option value="">Any TVL</option><option value="s">Under $50M</option><option value="m">$50M to $250M</option><option value="l">Over $250M</option></select>
-<select id="sortk" aria-label="Sort by"><option value="edge">Sort: expected edge</option><option value="win">Sort: chance of profit</option><option value="moic">Sort: payoff per dollar of cost</option><option value="rank">Sort: implied value</option><option value="tvl">Sort: TVL</option><option value="g7">Sort: 7d change</option></select>
 </div>
+<div class="presets" id="presets"></div>
+<div class="scn">Airdrop share <input type="range" id="drop" min="2" max="20" step="1" value="8" aria-label="Airdrop share of token value"><b id="dropv">8%</b><button class="btn" id="rst" type="button">Reset</button></div>
 </div>
-<div class="scroll" id="list" style="padding-top:0"></div>
-<div class="count" id="count"></div>
-</section>
-<section class="card" aria-label="Market views">
-<div class="read" id="read"></div>
-<div class="scn" id="scn">Airdrop share <input type="range" id="drop" min="2" max="20" step="1" value="8" aria-label="Airdrop share of token value"><b id="dropv">8%</b> <button class="btn" id="rst" type="button" style="padding:0 8px">Reset</button></div>
-<div class="tabs" role="tablist" data-g="mid"><button role="tab" data-t="tree" aria-selected="true">Treemap</button><button role="tab" data-t="basket" aria-selected="false">Basket</button><button role="tab" data-t="evidence" aria-selected="false">Evidence</button><button role="tab" data-t="live" aria-selected="false">Live</button></div>
-<div class="scroll" data-g="mid" data-p="tree"><div id="tree"></div><div class="key"><span><i style="background:var(--farm)"></i>Farm now</span><span><i style="background:var(--watch)"></i>Watch</span><span><i style="background:var(--skip)"></i>Skip</span><span>area = implied value</span><span>brightness = chance of profit</span></div></div>
-<div class="scroll" data-g="mid" data-p="basket" hidden><div id="basket"></div></div>
+<div class="tabs" role="tablist" data-g="mid"><button role="tab" data-t="board" aria-selected="true">Board</button><button role="tab" data-t="evidence" aria-selected="false">Evidence</button><button role="tab" data-t="live" aria-selected="false">Token already trades</button><span id="count"></span><button class="btn" type="button" data-export="1">Export CSV</button></div>
+<div class="scroll flush" data-g="mid" data-p="board"><table class="t" id="list"></table></div>
 <div class="scroll" data-g="mid" data-p="evidence" hidden><div id="evid"></div></div>
-<div class="scroll" data-g="mid" data-p="live" hidden><h2>Token already trades: set aside, valued by the market</h2><table id="live"></table></div>
-<div class="selbar" id="selbar" style="margin:0 10px 10px"></div>
+<div class="scroll" data-g="mid" data-p="live" hidden><h2>Token already trades: kept off the board, valued by the market</h2><table id="live"></table></div>
 </section>
 <section class="card" aria-label="Protocol detail" aria-live="polite">
 <div class="dh" id="dh"></div>
@@ -46,11 +39,12 @@
 <div class="scroll" data-g="det" data-p="data" id="d-data" hidden></div>
 </section>
 </main>
-<nav class="nav" id="nav" aria-label="Views"><button data-go="list" aria-selected="true">Screener</button><button data-go="mid" aria-selected="false">Market views</button><button data-go="det" aria-selected="false">Detail</button></nav>
+<nav class="nav" id="nav" aria-label="Views"><button data-go="list" aria-selected="true">Board</button><button data-go="det" aria-selected="false">Detail</button></nav>
 </div>
-<div id="tip" role="tooltip" hidden></div><div id="toast" role="status" hidden></div>
+<div id="tip" role="tooltip" hidden></div>
 <script src="../data.js"></script>
 <script src="model.js"></script>
+<script src="plan.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

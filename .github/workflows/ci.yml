@@ -24,7 +24,7 @@ jobs:
       - name: Conventions (npm run lint)
         run: npm run lint
       - name: Syntax of the dashboard scripts
-        run: node --check dashboard/model.js && node --check dashboard/app.js
+        run: node --check dashboard/model.js && node --check dashboard/plan.js && node --check dashboard/app.js
 
   verify:
     runs-on: ubuntu-latest
@@ -46,4 +46,4 @@ jobs:
       - name: The dossier is whole and fits the judge's text budget
         run: |
           mkdir -p out && node main.ts --input input/snapshot.json --output out
-          node -e "const t=JSON.parse(require('fs').readFileSync('out/dossier.json','utf8')).text; const n=Buffer.byteLength(t); console.log('dossier text bytes',n); if(n>65536||!t.includes('g.RadarModel')) process.exit(1)"
+          node -e "const t=JSON.parse(require('fs').readFileSync('out/dossier.json','utf8')).text; const n=Buffer.byteLength(t); console.log('dossier text bytes',n); if(n>65536||!t.includes('g.RadarModel')||!t.includes('g.RadarPlan = {')) process.exit(1)"

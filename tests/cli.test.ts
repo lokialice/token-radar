@@ -18,7 +18,7 @@ test('main.ts reads the snapshot and writes the grader\'s files, exiting 0', () 
   const out = join(dir, 'out');
   const r = node(['main.ts', '--input', input], root, { MAKEFUN_OUTPUT_DIR: out });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^token radar: \d+ protocols, \d+ rows ranked, 4 dashboard files, 3 screenshots\n$/);
+  assert.match(r.stdout, /^token radar: \d+ protocols, \d+ rows ranked, 5 dashboard files, 3 screenshots\n$/);
   assert.deepEqual(readdirSync(out).sort(), ['board.json', 'dashboard', 'data.js', 'dossier.json', 'screenshots']);
 });
 
@@ -90,6 +90,6 @@ test('the repository itself passes its own lint, and its two runs match byte for
   assert.equal(l.status, 0, l.stderr);
   const v = node(['scripts/verify.ts']);
   assert.equal(v.status, 0, v.stderr);
-  assert.match(v.stdout, /verify: two runs wrote the same 10 files, byte for byte/);
+  assert.match(v.stdout, /verify: two runs wrote the same 11 files, byte for byte/);
   assert.ok(readFileSync(join(root, 'AGENTS.md'), 'utf8').includes('npm run lint'));
 });

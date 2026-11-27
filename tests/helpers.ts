@@ -2,9 +2,12 @@
 import type { Snapshot, SnapshotProtocol } from '../lib/snapshot.ts';
 
 await import('../dashboard/model.js');
+await import('../dashboard/plan.js');
 
 /** The engine the page and main.ts run. */
 export const M = (globalThis as unknown as { RadarModel: any }).RadarModel;
+/** The farm plan writer the page and main.ts run. */
+export const P = (globalThis as unknown as { RadarPlan: any }).RadarPlan;
 
 /** A small seeded generator, so a test snapshot is the same every run. */
 export function seeded(seed: number): () => number {
@@ -48,7 +51,7 @@ export function synth(n = 420, seed = 7, over: { undated?: boolean } = {}): Snap
     const day = Math.floor(r() * 1400);
     protocols.push(
       proto(`p${i}`, {
-        name: `Proto ${i}`,
+        name: `Q${i} Proto`,
         category,
         chains: CHAINS[Math.floor(r() * CHAINS.length)]!,
         tvl_usd: tvl,

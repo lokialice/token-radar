@@ -18,9 +18,10 @@ const probes: SnapshotProtocol[] = [
   proto('nochains', { chains: [] }), proto('foobar', { chains: ['Foobar'] }), proto('multi', { chains: ['Ethereum', 'Base'] }), proto('big', { tvl_usd: 2e9 }),
   proto('gecko-only', { gecko_id: 'g', symbol: null }), proto('cex', { category: 'CEX' }), proto('house', { tvl_usd: 80e6 }),
   proto('lst', { category: 'Liquid Staking', tvl_usd: 90e6 }),
+  proto('acme-lend', { name: 'Acme Lend', mcap_usd: 1e6, symbol: 'ACME' }), proto('acme-earn', { name: 'Acme Earn' }), proto('acme-vault', { name: 'Acme Vault', tvl_usd: 70e6 }), proto('ab-one', { name: 'Ab One', mcap_usd: 1e6 }), proto('ab-two', { name: 'Ab Two' }),
   proto('foo-bridge', { category: 'Bridge' }), proto('foo-v2', { name: 'Foo V2' }), proto('wrapped-foo', { name: 'Wrapped Foo' }), proto('binance-foo', { name: 'Binance Foo' }),
 ];
-const world = { ...base, protocols: [...base.protocols, ...probes], watchlist: [...base.watchlist, 'big', 'lst', 'ghost-slug'] };
+const world = { ...base, protocols: [...base.protocols, ...probes], watchlist: [...base.watchlist, 'big', 'lst', 'acme-vault', 'ghost-slug'] };
 const run = M.run(world);
 const row = (slug: string): any => run.rows.find((r: any) => r.slug === slug);
 
@@ -34,7 +35,7 @@ test('helpers: age, token record, derivative products and families', () => {
   for (const category of ['Bridge', 'Canonical Bridge', 'Liquid Staking', 'Liquid Restaking', 'Restaked BTC', 'CEX']) assert.equal(M.derivative(proto('a', { category })), true, category);
   for (const name of ['Foo V2', 'Foo v3', 'Foo 2.0', 'Wrapped Foo', 'Foo Staked', 'My Staking Pool', 'Binance Foo', 'coinbase thing', 'OKX Earn', 'Kraken X']) assert.equal(M.derivative(proto('a', { name })), true, name);
   for (const name of ['Foo', 'Voucher', 'Okay Protocol', 'V2 Capital', 'Unwrapped']) assert.equal(M.derivative(proto('a', { name })), name === 'Unwrapped' ? false : false, name);
-  const families: [string | null, string][] = [['Lending', 'lending'], ['CDP', 'stable'], ['Dexs', 'dex'], ['Perps', 'derivatives'], ['RWA', 'rwa'], ['Risk Curators', 'vault'], ['Cross Chain', 'bridge'], ['Prediction Market', 'prediction'], ['Gaming', 'other'], [null, 'other']];
+  const families: [string | null, string][] = [['Lending', 'lending'], ['CDP', 'stable'], ['Dexs', 'dex'], ['DEX Aggregator', 'dex'], ['Indexes', 'vault'], ['Perps', 'derivatives'], ['RWA', 'rwa'], ['Risk Curators', 'vault'], ['Cross Chain', 'bridge'], ['Prediction Market', 'prediction'], ['Gaming', 'other'], [null, 'other']];
   for (const [category, family] of families) assert.equal(M.family(category), family, String(category));
 });
 
@@ -51,7 +52,7 @@ test('a farm is priced from its chain, its pool size and its protocol\'s age', (
   assert.deepEqual(holds, [45, 75, 60, 45]);
   const c = M.cost(proto('a', { chains: ['Base'] }), 900);
   assert.equal(c.weeks, 6);
-  assert.ok(Math.abs(c.gas - 0.08 * (4 + 2 * 6 + 2)) < 1e-9);
+  assert.ok(Math.abs(c.gas - 0.08 * (8 + 2 * 6)) < 1e-9, 'transfer, deposit, six weekly actions, exit');
   assert.ok(Math.abs(c.carry - 100 * 0.04 * (45 / 365)) < 1e-9);
   assert.ok(Math.abs(c.cost - c.gas - c.carry) < 1e-9);
 });
@@ -60,7 +61,9 @@ test('the board holds the watchlist and the pre-token protocols the house rule w
   const slugs = new Set(run.rows.map((r: any) => r.slug));
   assert.ok(slugs.has('big'));
   for (const s of base.watchlist) assert.ok(slugs.has(s), s);
-  for (const s of ['foo-bridge', 'foo-v2', 'wrapped-foo', 'binance-foo', 'cex', 'house', 'gecko-only', 'ghost-slug']) assert.ok(!slugs.has(s), `${s} is not on the board`);
+  assert.ok(slugs.has('house'), 'a pre-token protocol above the floor and off the watchlist is ranked too');
+  assert.ok(slugs.has('ab-two'), 'a first word of two letters says nothing');
+  for (const s of ['foo-bridge', 'foo-v2', 'wrapped-foo', 'binance-foo', 'cex', 'acme-earn', 'acme-lend', 'gecko-only', 'ghost-slug']) assert.ok(!slugs.has(s), `${s} is not on the board`);
   run.rows.forEach((r: any, i: number) => {
     assert.equal(r.rank, i + 1);
     if (i > 0) assert.ok(r.implied <= run.rows[i - 1].implied);
@@ -81,37 +84,74 @@ test('each risk is raised by its own figure, and a hard risk is flagged as hard'
   assert.equal(row('lend').hard, false);
 });
 
-test('a family with few priced peers says so, in the singular and the plural, and is low confidence', () => {
+test('a family with few priced peers says so, in the singular and the plural', () => {
   assert.equal(row('pm-probe').peers, 1);
   assert.ok(row('pm-probe').flags.some((f: string) => /Only 1 live-token protocol in its family/.test(f)));
   assert.ok(row('cdp-probe').flags.some((f: string) => /Only 2 live-token protocols in its family/.test(f)));
   assert.ok(row('bridge-probe').flags.some((f: string) => /Only 0 live-token protocols in its family/.test(f)));
   assert.deepEqual(['pm-probe', 'cdp-probe', 'bridge-probe'].map((s) => row(s).gaps.includes('fit')), [true, true, true]);
-  assert.deepEqual([row('pm-probe').conf, row('rwa-probe').peers, row('rwa-probe').conf], ['low', 5, 'medium']);
-  const dex = run.rows.find((r: any) => r.kind === 'dex');
-  assert.ok(dex.peers >= 8);
-  assert.equal(dex.conf, 'high');
+  assert.equal(row('rwa-probe').peers, 5);
+  assert.deepEqual(row('rwa-probe').gaps, []);
+});
+
+test('a listing that shares its first word with a traded token is flagged on the watchlist and left off elsewhere', () => {
+  assert.ok(row('acme-vault').flags.includes('A listing of the same first name already trades: Acme Lend'));
+  assert.equal(row('acme-earn'), undefined);
+  assert.ok(!row('lend').flags.some((f: string) => /same first name/.test(f)));
+});
+
+test('a farm whose fees reach its deposit is flagged as not worth running', () => {
+  const dear = run.rows.filter((r: any) => r.cost >= r.capital), cheap = run.rows.filter((r: any) => r.cost < r.capital);
+  assert.ok(dear.length > 0 && cheap.length > 0);
+  for (const r of dear) assert.ok(r.flags.includes('Fees exceed the deposit: not worth running'), r.slug);
+  for (const r of cheap) assert.ok(!r.flags.some((f: string) => /Fees exceed/.test(f)), r.slug);
 });
 
 test('token odds follow the peers\' record and stay within their floor and ceiling', () => {
   // Ridge shrinks a family with no tokens toward the base rate instead of to zero, so the odds are low, not floored.
   assert.ok(row('curator').odds < 0.25 && row('curator').odds > M.C.oddsLo);
-  assert.ok(row('curator').flags.some((f: string) => /record a token only \d+% of the time/.test(f)));
+  assert.ok(row('curator').flags.some((f: string) => /Fitted token rate is only \d+%/.test(f)));
   assert.ok(row('lend').odds > 0.8);
-  assert.ok(!row('lend').flags.some((f: string) => /record a token only/.test(f)));
+  assert.ok(!row('lend').flags.some((f: string) => /Fitted token rate is only/.test(f)));
   for (const r of run.rows) assert.ok(r.odds >= M.C.oddsLo && r.odds <= M.C.oddsHi);
 });
 
-test('implied value is the value if it launches times the odds, built from the multiple\'s own terms', () => {
+test('the growth and age factors are bounded, neutral when unknown, and 1.0 at no change and one year', () => {
+  assert.deepEqual(M.factors(0, 365), { growth: 1, age: 1 });
+  assert.deepEqual(M.factors(null, null), { growth: 1, age: 1 });
+  assert.equal(M.factors(10, 365).growth, 1.05);
+  assert.equal(M.factors(-20, 365).growth, 0.9);
+  assert.deepEqual([M.factors(30, 0).growth, M.factors(4000, 0).growth, M.factors(-90, 0).growth], [1.15, 1.15, 0.85]);
+  assert.deepEqual([M.factors(0, 0).age, M.factors(0, 730).age, M.factors(0, 3000).age], [0.9, 1.1, 1.1]);
+});
+
+test('implied value is TVL times the multiple, rebuilt from its terms, and the record rate never multiplies it', () => {
   for (const r of run.rows) {
-    assert.ok(Math.abs(r.ifl * r.odds - r.implied) <= Math.max(2, r.implied * 0.002), r.slug);
     const product = r.build.reduce((p: number, b: any) => p * b.value, 1);
-    assert.ok(Math.abs(r.tvl * product - r.ifl) <= Math.max(2, r.ifl * 0.005), r.slug);
+    assert.ok(Math.abs(r.tvl * product - r.implied) <= Math.max(2, r.implied * 0.005), r.slug);
+    assert.ok(Math.abs(r.tvl * r.mult - r.implied) <= Math.max(2, r.implied * 0.005), r.slug);
+    assert.deepEqual(r.build.slice(-2).map((b: any) => b.label), ['growth factor', 'age factor']);
+    const k = M.factors(r.g7, r.age);
+    assert.ok(Math.abs(r.build.at(-2).value - k.growth) < 1e-4 && Math.abs(r.build.at(-1).value - k.age) < 1e-4);
     assert.equal(r.pool.length, M.C.draws);
   }
   assert.equal(row('foobar').tx, 0.6);
   assert.equal(row('nochains').chain, 'its main chain');
   assert.equal(row('multi').chain, 'Base');
+});
+
+test('two protocols alike but for growth, or for days listed, differ by exactly that factor', () => {
+  const twins = { ...world, protocols: [...world.protocols, proto('slow', { change_7d: -10 }), proto('quick', { change_7d: 10 }), proto('new', { listed_at: '2026-09-14' }), proto('old', { listed_at: '2024-11-14' })] };
+  const r = M.run(twins), v = (slug: string): any => r.rows.find((x: any) => x.slug === slug);
+  assert.ok(Math.abs(v('quick').implied / v('slow').implied - 1.05 / 0.95) < 1e-4);
+  assert.ok(Math.abs(v('old').implied / v('new').implied - M.factors(0, v('old').age).age / M.factors(0, v('new').age).age) < 1e-4);
+  assert.ok(v('quick').implied > v('slow').implied && v('old').implied > v('new').implied, 'more growth and a longer record never lower the value');
+});
+
+test('the held-out error is reported with the fixed factors and without them', () => {
+  const v = run.evidence.value;
+  assert.ok(v.plain.loo > 1 && v.plain.wf > 1);
+  assert.notDeepEqual(v.plain, v.final);
 });
 
 test('the ledger puts every protocol in exactly one group', () => {
@@ -121,7 +161,7 @@ test('the ledger puts every protocol in exactly one group', () => {
   assert.ok(ledger[2] >= 20, 'priced comps');
   assert.ok(ledger[3] >= 1, 'a token recorded, no cap');
   assert.equal(ledger[4], 1, 'the exchange');
-  assert.ok(ledger[5] >= 1, 'set aside by the house rule');
+  assert.equal(ledger[5], 1, 'kin of a token that trades');
   assert.ok(ledger[6] >= 4, 'derivative products');
   assert.equal(ledger[7], 0);
 });
@@ -182,8 +222,8 @@ test('rows beyond the row cap are counted, not silently dropped', () => {
   assert.equal(r.rows.find((x: any) => x.slug === 'nocat').category, null, 'a protocol with no category is ranked, and read as uncategorised');
 });
 
-// ---- the payoff, the verdict and the basket, on rows built by hand so every figure is known ----
-const hand = (over: Record<string, unknown> = {}): any => ({ slug: 'h', kind: 'dex', hard: false, peers: 5, capital: 100, gas: 1, carry: 1, cost: 2, pool: Float64Array.from({ length: 400 }, (_, i) => i), ...over });
+// ---- the payoff and the verdict, on rows built by hand so every figure is known ----
+const hand = (over: Record<string, unknown> = {}): any => ({ slug: 'h', cost: 2, pool: Float64Array.from({ length: 400 }, (_, i) => i), ...over });
 
 test('a payoff is cut at its 95th percentile, and scales with the airdrop share', () => {
   const e = M.econ(hand({ cost: 100 }), 1);
@@ -209,27 +249,6 @@ test('the verdict needs a 40% chance, twice the cost back, no hard risk and thre
   assert.equal(v({}, { win: 0.25, moic: 0.5, edge: -1 }), 'watch');
   assert.equal(v({}, { win: 0.24, moic: 0.5, edge: -1 }), 'skip');
   assert.equal(v({}, { win: 0.1, moic: 0.5, edge: 0 }), 'skip');
-});
-
-test('a basket takes the best edges, at most two a family, never a skip or a hard risk', () => {
-  const pool = (x: number) => new Float64Array(M.C.draws).fill(x);
-  const rows = [
-    hand({ slug: 'a1', kind: 'A', verdict: 'farm', e: { edge: 9 }, pool: pool(20) }), hand({ slug: 'a2', kind: 'A', verdict: 'watch', e: { edge: 8 }, pool: pool(20) }), hand({ slug: 'a3', kind: 'A', verdict: 'farm', e: { edge: 7 }, pool: pool(20) }),
-    hand({ slug: 'b1', kind: 'B', verdict: 'watch', e: { edge: 6 }, pool: pool(20) }), hand({ slug: 'b2', kind: 'B', verdict: 'farm', e: { edge: 5 }, pool: pool(20) }), hand({ slug: 'b3', kind: 'B', verdict: 'farm', e: { edge: 4 }, pool: pool(20) }),
-    hand({ slug: 'c1', kind: 'C', verdict: 'skip', e: { edge: 99 }, pool: pool(20) }), hand({ slug: 'd1', kind: 'D', verdict: 'farm', hard: true, e: { edge: 98 }, pool: pool(20) }), hand({ slug: 'e1', kind: 'E', verdict: 'watch', e: { edge: 3 }, pool: pool(0) }),
-  ];
-  const b = M.basket(rows, 1, 5, 1);
-  assert.deepEqual(b.pick.map((r: any) => r.slug), ['a1', 'a2', 'b1', 'b2', 'e1']);
-  assert.equal(b.cap, 500);
-  assert.equal(b.net.length, M.C.draws);
-  assert.ok(b.net.every((x: number) => x === 4 * (20 - 2) + (0 - 2)));
-  assert.deepEqual([b.p5, b.p50, b.p95, b.ev, b.loss], [70, 70, 70, 70, 0]);
-  const big = M.basket(rows, 1, 5, 3);
-  assert.equal(big.cap, 1500);
-  assert.equal(big.net[0], 4 * (60 - (1 + 3)) + (0 - 4));
-  assert.equal(M.basket(rows.slice(-1), 1, 5, 1).loss, 1);
-  assert.equal(M.basket([], 1, 5, 1).pick.length, 0);
-  assert.equal(M.basket(rows, 1, 2, 1).pick.length, 2);
 });
 
 test('loaded as a browser script it sets window.RadarModel and computes the same board', () => {

@@ -31,7 +31,7 @@ for (const path of walk(root)) {
   });
   check(text.endsWith('\n'), `${rel} does not end with a newline`);
   // Output must be a pure function of the snapshot.
-  if (/^(main\.ts|lib\/.*\.ts|dashboard\/model\.js)$/.test(rel)) {
+  if (/^(main\.ts|lib\/.*\.ts|dashboard\/(model|plan)\.js)$/.test(rel)) {
     check(!/Date\.now|Math\.random|new Date\(/.test(text), `${rel} reads the clock or a random source`);
   }
   if (/^(main\.ts|lib\/.*\.ts)$/.test(rel)) check(!/:\s*any\b|as any\b/.test(text), `${rel} uses any`);

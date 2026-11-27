@@ -2,7 +2,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { test } from 'node:test';
-import { farmSteps, stepText } from '../lib/plan.ts';
 import { boardIssue, parseSnapshot } from '../lib/snapshot.ts';
 
 const snapshotFile = new URL('../input/snapshot.json', import.meta.url);
@@ -11,7 +10,8 @@ if (!existsSync(snapshotFile)) {
   process.exit(0);
 }
 await import('../dashboard/model.js');
-const M = (globalThis as unknown as { RadarModel: any }).RadarModel;
+await import('../dashboard/plan.js');
+const { RadarModel: M, RadarPlan: P } = globalThis as unknown as { RadarModel: any; RadarPlan: any };
 const snapshot = parseSnapshot(readFileSync(snapshotFile, 'utf8'));
 const run = M.run(snapshot);
 
@@ -23,18 +23,26 @@ test('the engine is deterministic: two runs agree, draws included', () => {
 });
 
 test('the board is one the gate takes, and every watchlist protocol is on it', () => {
-  const rows = run.rows.map((r: any) => ({ rank: r.rank, slug: r.slug, name: r.name, implied_value_usd: r.implied, farm_steps: farmSteps({ name: r.name, category: r.category, chain: r.chain, tx: r.tx, capital: r.capital, hold: r.hold, weeks: r.weeks, carry: r.carry }).map(stepText) }));
+  const rows = run.rows.map((r: any) => ({ rank: r.rank, slug: r.slug, name: r.name, implied_value_usd: r.implied, farm_steps: P.farmSteps(r).map(P.stepText) }));
   assert.equal(boardIssue(rows, snapshot), null);
   const slugs = new Set(rows.map((r: any) => r.slug));
   for (const s of snapshot.watchlist) assert.ok(slugs.has(s), `${s} is missing`);
   assert.ok(rows.length - snapshot.watchlist.length >= 60, 'at least 60 rows outside the watchlist');
 });
 
-test('implied value is the value if it launches times the odds, and ranks never rise', () => {
+test('implied value is TVL times the multiple the page shows term by term, and ranks never rise', () => {
   run.rows.forEach((r: any, i: number) => {
-    assert.ok(Math.abs(r.ifl * r.odds - r.implied) <= Math.max(2, r.implied * 0.002), r.slug);
+    const product = r.build.reduce((p: number, b: any) => p * b.value, 1);
+    assert.ok(Math.abs(r.tvl * product - r.implied) <= Math.max(2, r.implied * 0.005), r.slug);
     if (i > 0) assert.ok(r.implied <= run.rows[i - 1].implied);
   });
+});
+
+test('on every row the six step fees add up to the cost the board shows', () => {
+  for (const r of run.rows) {
+    const fees = P.farmSteps(r).reduce((s: number, step: any) => s + step.fee, 0);
+    assert.ok(Math.abs(fees - r.cost) < 1e-9, `${r.slug}: steps ${fees}, total ${r.cost}`);
+  }
 });
 
 test('a term is kept only when both held-out tests improve', () => {

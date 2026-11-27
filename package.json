@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node main.ts --input input/snapshot.json --output out",
-    "test": "node --test --experimental-test-coverage --test-coverage-include='lib/**' --test-coverage-include='dashboard/model.js' --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 tests/*.test.ts",
+    "test": "node --test --experimental-test-coverage --test-coverage-include='lib/**' --test-coverage-include='dashboard/model.js' --test-coverage-include='dashboard/plan.js' --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 tests/*.test.ts",
     "verify": "node scripts/verify.ts",
     "lint": "node scripts/lint.ts",
     "test:unit": "node --test tests/snapshot.test.ts tests/plan.test.ts tests/model.test.ts tests/build.test.ts tests/real.test.ts"

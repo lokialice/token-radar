@@ -1,7 +1,7 @@
 // The build: snapshot in, the files the grader checks out. main.ts is a thin shell around this so it can be tested.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { COVERAGE, DILIGENCE, LEDGER, PROSE, farmSteps, stepText } from './plan.ts';
+import { COVERAGE, DILIGENCE, LEDGER, PROSE } from './text.ts';
 import { boardIssue, parseSnapshot } from './snapshot.ts';
 import { DossierError, buildDossier } from '../vendor/makefun-board.ts';
 
@@ -35,7 +35,8 @@ interface EngineRow {
   weeks: number;
   carry: number;
   implied: number;
-  ifl: number;
+  age: number | null;
+  g7: number | null;
   odds: number;
   mult: number;
   tvl: number;
@@ -43,6 +44,12 @@ interface EngineRow {
 
 interface Engine {
   run: (snapshot: unknown) => { rows: EngineRow[]; total: number };
+}
+
+/** A farm step as dashboard/plan.js writes it. */
+interface Planner {
+  farmSteps: (row: EngineRow) => unknown[];
+  stepText: (step: unknown) => string;
 }
 
 /** --name <value> or --name=value out of the arguments, else the fallback. */
@@ -83,9 +90,10 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
   if (!existsSync(options.input)) {
     return { code: 2, message: `token radar: no snapshot at ${options.input}: pass --input <snapshot.json|directory> or mount the sealed /input` };
   }
-  // The engine is a classic script that sets RadarModel on the global object: here, and in the page.
+  // The engine and the farm plan are classic scripts that set a global: here, and in the page.
   await import('../dashboard/model.js');
-  const engine = (globalThis as unknown as { RadarModel: Engine }).RadarModel;
+  await import('../dashboard/plan.js');
+  const { RadarModel: engine, RadarPlan: planner } = globalThis as unknown as { RadarModel: Engine; RadarPlan: Planner };
 
   let snapshot;
   let run;
@@ -97,23 +105,17 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
     throw error;
   }
 
-  // The plan in words, from the same deposit, gas and hold the engine prices.
-  const plans: Record<string, { text: string; cost: string; time: string }[]> = {};
-  const board = run.rows.map((r) => {
-    const steps = farmSteps({ name: r.name, category: r.category, chain: r.chain, tx: r.tx, capital: r.capital, hold: r.hold, weeks: r.weeks, carry: r.carry });
-    plans[r.slug] = steps;
-    return { rank: r.rank, slug: r.slug, name: r.name, implied_value_usd: r.implied, farm_steps: steps.map(stepText), value_if_launch_usd: r.ifl, token_odds: r.odds, multiple: r.mult, tvl_usd: r.tvl };
-  });
+  const board = run.rows.map((r) => ({ rank: r.rank, slug: r.slug, name: r.name, implied_value_usd: r.implied, farm_steps: planner.farmSteps(r).map(planner.stepText), tvl_usd: r.tvl, change_7d: r.g7, days_listed: r.age, multiple: r.mult, token_record_rate: r.odds }));
   const issue = boardIssue(board, snapshot);
   if (issue !== null) return { code: 1, message: `token radar: the engine wrote a board the gate refuses: ${issue}` };
 
   mkdirSync(options.output, { recursive: true });
   writeFileSync(join(options.output, 'board.json'), `${JSON.stringify({ rows: board })}\n`);
-  // The page's data: the sealed snapshot itself (the page refits both models from it), the plans in words, and the
+  // The page's data: the sealed snapshot itself (the page refits both models and writes the plans from it) and the
   // board's implied values, which the page compares with its own so the two runs are checked against each other.
   writeFileSync(
     join(options.output, 'data.js'),
-    `window.SNAPSHOT=${JSON.stringify(snapshot)};\nwindow.PLANS=${JSON.stringify(plans)};\nwindow.BOARD=${JSON.stringify(board.map((b) => [b.slug, b.implied_value_usd]))};\nwindow.TEXT=${JSON.stringify({ coverage: COVERAGE, checklists: DILIGENCE, ledger: LEDGER, prose: PROSE })};\n`,
+    `window.SNAPSHOT=${JSON.stringify(snapshot)};\nwindow.BOARD=${JSON.stringify(board.map((b) => [b.slug, b.implied_value_usd]))};\nwindow.TEXT=${JSON.stringify({ coverage: COVERAGE, checklists: DILIGENCE, ledger: LEDGER, prose: PROSE })};\n`,
   );
 
   const files = copyFiles(options.dashboard, join(options.output, 'dashboard'));

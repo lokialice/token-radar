@@ -37,15 +37,16 @@ test('a good build writes the board, the page\'s data, the dashboard, the screen
   const o = opts({ dashboard: (() => { const d = tmp(); for (const f of readdirSync(join(root, 'dashboard'))) copyFileSync(join(root, 'dashboard', f), join(d, f)); writeFileSync(join(d, '.hidden'), 'x'); mkdirSync(join(d, 'sub')); return d; })(), screenshots: shots(3, (d) => writeFileSync(join(d, '.dot.png'), 'x')) });
   const result = await build(o);
   assert.equal(result.code, 0);
-  assert.match(result.message, /^token radar: \d+ protocols, \d+ rows ranked, 4 dashboard files, 3 screenshots$/);
+  assert.match(result.message, /^token radar: \d+ protocols, \d+ rows ranked, 5 dashboard files, 3 screenshots$/);
   assert.deepEqual(readdirSync(o.output).sort(), ['board.json', 'dashboard', 'data.js', 'dossier.json', 'screenshots']);
-  assert.deepEqual(readdirSync(join(o.output, 'dashboard')).sort(), ['app.css', 'app.js', 'index.html', 'model.js']);
+  assert.deepEqual(readdirSync(join(o.output, 'dashboard')).sort(), ['app.css', 'app.js', 'index.html', 'model.js', 'plan.js']);
   assert.equal(readdirSync(join(o.output, 'screenshots')).length, 3);
   const board = JSON.parse(readFileSync(join(o.output, 'board.json'), 'utf8')).rows;
   assert.ok(board.length >= 100);
-  assert.deepEqual(Object.keys(board[0]).sort(), ['farm_steps', 'implied_value_usd', 'multiple', 'name', 'rank', 'slug', 'token_odds', 'tvl_usd', 'value_if_launch_usd']);
+  assert.deepEqual(Object.keys(board[0]).sort(), ['change_7d', 'days_listed', 'farm_steps', 'implied_value_usd', 'multiple', 'name', 'rank', 'slug', 'token_record_rate', 'tvl_usd']);
   const data = readFileSync(join(o.output, 'data.js'), 'utf8');
-  for (const key of ['SNAPSHOT', 'PLANS', 'BOARD', 'TEXT']) assert.ok(data.includes(`window.${key}=`), key);
+  assert.match(board[0].farm_steps[1], /Cost: \$[\d.,]+ transfer; the deposit comes back\. Time: 10 min\.$/);
+  for (const key of ['SNAPSHOT', 'BOARD', 'TEXT']) assert.ok(data.includes(`window.${key}=`), key);
   assert.ok(JSON.parse(readFileSync(join(o.output, 'dossier.json'), 'utf8')).text.includes('g.RadarModel'));
 });
 
