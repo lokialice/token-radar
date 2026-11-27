@@ -22,7 +22,7 @@ this is the reasoning. Rules that a script can check are checked by `npm run lin
   its own rows with `e` (economics) and `verdict` in `eco()`, because every view reads them; it is the only writer.
 
 ## Naming
-- Files: `kebab-case` or single words (`model.js`, `plan.ts`). Tests end in `.test.ts`. ADRs are `NNNN-title.md`.
+- Files: `kebab-case` or single words (`model.js`, `snapshot.ts`). Tests end in `.test.ts`. ADRs are `NNNN-title.md`.
 - Functions are verbs (`fitValue`, `farmSteps`, `parseSnapshot`); values and types are nouns (`Snapshot`, `Rung`).
 - Booleans read as questions (`derivative`, `hard`, `kept`). Units go in the name: `tvl_usd`, `hold` (days), `tx` (USD).
 - A named constant beats a magic number: tune in `C` (`dashboard/model.js`) or a top-level `const`, with a comment saying why.
@@ -38,8 +38,8 @@ this is the reasoning. Rules that a script can check are checked by `npm run lin
 ## The dashboard exception
 The judge reads `dashboard/` from the dossier, whose text holds 65,536 bytes with its headers, so all files together
 stay under **64,800 bytes** (checked by `npm run lint`). That budget wins over style where they clash: indentation is
-dropped in `app.js`, one space in `model.js`, and some functions run past 50 lines (`detail`, `evid`, `cTree`).
-Do not "fix" them with more bytes; shorten text, move static prose to `lib/plan.ts` (`PROSE`) or delete a feature.
+dropped in `app.js`, one space in `model.js`, and some functions run past 50 lines (`detail`, `evid`).
+Do not "fix" them with more bytes; shorten text, move static prose to `lib/text.ts` (`PROSE`) or delete a feature.
 Known debt: those long functions, and a few repeated inline styles.
 
 ## Comments and documentation
@@ -48,16 +48,16 @@ Known debt: those long functions, and a few repeated inline styles.
 - Every number the page shows is computed in the page from the snapshot, or is static text from `data.js`. Never a bare literal.
 
 ## Tests
-- Node's built-in runner, `npm test`, fails below **100% line, branch and function coverage** of `lib/` and `dashboard/model.js`.
+- Node's built-in runner, `npm test`, fails below **100% line, branch and function coverage** of `lib/`, `dashboard/model.js` and `dashboard/plan.js`.
   `npm run test:unit` is the quick suite without a browser; it is what the pre-commit hook runs.
 - The page (`dashboard/app.js`) is driven in a real Chrome over the DevTools protocol (`tests/ui.test.ts`, no dependency
-  installed); the test fails if any character of `app.js` or `model.js` never ran. Set `CHROME` to point at a browser.
+  installed); the test fails if any character of `app.js`, `model.js` or `plan.js` never ran. Set `CHROME` to point at a browser.
 - `main.ts` and `scripts/` are tested as the processes they are (`tests/cli.test.ts`): exit codes, output, each lint rule.
 - Data: engine tests run on a seeded synthetic snapshot with known structure and probes for each rule
   (`tests/helpers.ts`); `tests/real.test.ts` and one browser test run on the sealed snapshot. The snapshot is not
   committed, so those skip without `input/snapshot.json`.
 - Name a test for the behaviour; arrange, act, assert; one behaviour per test; tests are independent and need no network.
-- A change to `dashboard/model.js` needs a test. 100% coverage proves every line ran, not that every case is right:
+- A change to `dashboard/model.js` or `plan.js` needs a test. 100% coverage proves every line ran, not that every case is right:
   assert the figure, the flag text and the boundary, not only that a branch was reached.
 
 ## Git

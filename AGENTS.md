@@ -13,13 +13,14 @@ Node 22.18+ (`.nvmrc`), TypeScript run as-is by Node, **standard library only**.
 | Quick tests, no browser | `npm run test:unit` |
 | Two-run byte check | `npm run verify` |
 | Conventions | `npm run lint` (rules and reasons: `CONVENTIONS.md`) |
-| Syntax check | `node --check dashboard/model.js dashboard/app.js` |
+| Syntax check | `node --check dashboard/model.js dashboard/plan.js dashboard/app.js` |
 
 ## Layout
 - `dashboard/model.js`: the engine. Classic script, sets `RadarModel`. Run by the page AND by `main.ts`: change it in one place.
 - `dashboard/app.js`, `app.css`, `index.html`: the page. It reads `../data.js` (written by `main.ts`).
 - `main.ts`: entrypoint. Reads `/input/snapshot.json`, writes `/output` (`MAKEFUN_OUTPUT_DIR` overrides).
-- `lib/plan.ts`: the farm plan in words, coverage and diligence text. `lib/snapshot.ts`: snapshot parser, gate check.
+- `dashboard/plan.js`: the farm plan's six steps, fees and times. Classic script, sets `RadarPlan`. Run by the page AND the build.
+- `lib/text.ts`: coverage, diligence and explanation text. `lib/snapshot.ts`: snapshot parser, gate check.
 - `vendor/makefun-board.ts`: house library for `dossier.json`. Do not edit.
 - `screenshots/`: three PNGs, 800+px short side, 300 to 350 KB each; retake them after any change to the page.
 - `docs/adr/`: decisions. Add one when the model changes.
@@ -31,7 +32,7 @@ Full rules, with reasons and the dashboard's size-budget exceptions: `CONVENTION
 - Dashboard source (all files in `dashboard/`) stays under 64,800 bytes in total: the judge reads it from the dossier.
 - No network address anywhere in `dashboard/`.
 - Never commit `makefun-keypair.json`, `.env`, `input/` or `out/`.
-- A change to the model needs a test (`tests/model.test.ts`) and an ADR note; a change to the page needs a step in `tests/ui.test.ts`, which fails if any character of `app.js` or `model.js` never ran.
+- A change to the model needs a test (`tests/model.test.ts`) and an ADR note; a change to the page needs a step in `tests/ui.test.ts`, which fails if any character of `app.js`, `model.js` or `plan.js` never ran.
 
 ## Commit Attribution
 AI commits MUST include:

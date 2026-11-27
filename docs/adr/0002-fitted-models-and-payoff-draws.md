@@ -1,6 +1,7 @@
 # ADR 0002: fitted, held-out-tested models and payoff draws
 
-Status: accepted, model `fitted-3`. Supersedes ADR 0001 (peer-ratio-2), whose constants were assumed, not fitted.
+Status: accepted, model `fitted-3`; amended by ADR 0003 (what is ranked, and growth and age). Supersedes ADR 0001
+(peer-ratio-2), whose constants were assumed, not fitted.
 
 ## Context
 The judge reads only the dashboard's source and three screenshots. A figure whose derivation lives outside the
